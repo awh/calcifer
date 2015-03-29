@@ -1,22 +1,28 @@
 
 import akka.actor.{ Actor, ActorRef, Props }
-import akka.io.{ IO, Tcp }
+import akka.io.{Dns, IO, Tcp}
 import akka.util.ByteString
 import java.net.InetSocketAddress
 
 object Client {
-  def props(remote: InetSocketAddress, replies: ActorRef) =
-    Props(classOf[Client], remote, replies)
+  def props(name: String, port: Int, replies: ActorRef) =
+    Props(classOf[Client], name, port, replies)
 }
 
-class Client(remote: InetSocketAddress, listener: ActorRef) extends Actor {
+class Client(name: String, port: Int, listener: ActorRef) extends Actor {
 
+  import Dns._
   import Tcp._
   import context.system
 
-  IO(Tcp) ! Connect(remote)
+  IO(Dns) ! Resolve(name)
 
   def receive = {
+    case Resolved(name, ipv4s, ipv6s) =>
+      Console.println("IPv4 addresses " + ipv4s)
+      Console.println("IPv6 addresses " + ipv6s)
+      IO(Tcp) ! Connect(new InetSocketAddress(ipv6s.head, port))
+
     case CommandFailed(_: Connect) =>
       listener ! "connect failed"
       context stop self

@@ -11,9 +11,8 @@ object IOMain extends App {
 
   val listener = system.actorOf(Props[Listener])
 
-  val client = system.actorOf(Client.props(new InetSocketAddress("localhost", 6667), listener))
+  val client = system.actorOf(Client.props("localhost", 6667, listener))
 
   Console.println("Starting...");
-
 
 }
